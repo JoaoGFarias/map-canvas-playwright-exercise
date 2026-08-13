@@ -1,4 +1,4 @@
-.PHONY: up down reload
+.PHONY: up down reload test
 
 up:
 	cd mapbox && npm install && (npm start > /tmp/technosylva-mapbox.log 2>&1 & echo $$! > /tmp/technosylva-mapbox.pid)
@@ -15,3 +15,7 @@ down:
 	@echo "stopped"
 
 reload: down up
+
+test:
+	cd mapbox && npm test
+	cd leaflet && npm test
