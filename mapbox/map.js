@@ -1,11 +1,16 @@
+// Fire-risk zone location — deliberately NOT the map's initial center/zoom.
+// A test must force the view to this via jumpTo before asserting anything,
+// same as a real app never boots already looking at the place under test.
 const center = [-122.4194, 37.7749];
 
+// Boots at a neutral world view, not the fire-risk zone above.
 const map = new maplibregl.Map({
   container: 'map',
   style: 'https://tiles.openfreemap.org/styles/liberty',
-  center,
-  zoom: 9,
+  center: [0, 0],
+  zoom: 2,
 });
+window.map = map;
 
 new maplibregl.Marker({ color: '#d64545' }).setLngLat(center).addTo(map);
 

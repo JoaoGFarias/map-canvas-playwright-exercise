@@ -1,12 +1,17 @@
-// Real-world CRS + OSM basemap, matching the mapbox/ example's SF center/zoom
-// so both pages show the same recognizable place.
+// Fire-risk zone location — deliberately NOT the map's initial center/zoom.
+// A test must force the view to this (setView with animate: false) before
+// asserting anything, same as a real app never boots already looking at
+// the place under test.
 const center = [37.7749, -122.4194];
 
-const map = L.map('map', { preferCanvas: true }).setView(center, 9);
+// Boots at a neutral world view, not the fire-risk zone above.
+const map = L.map('map', { preferCanvas: true }).setView([0, 0], 2);
+window.map = map;
 
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+const tileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors',
 }).addTo(map);
+window.tileLayer = tileLayer;
 
 // Fire-risk polygon, same footprint as the mapbox/ example.
 // preferCanvas makes Leaflet rasterize this to a single shared <canvas>,

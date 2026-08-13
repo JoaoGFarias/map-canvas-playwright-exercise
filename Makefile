@@ -1,4 +1,4 @@
-.PHONY: up down
+.PHONY: up down reload
 
 up:
 	cd mapbox && npm install && (npm start > /tmp/technosylva-mapbox.log 2>&1 & echo $$! > /tmp/technosylva-mapbox.pid)
@@ -13,3 +13,5 @@ down:
 	-pkill -f "node server.js" 2>/dev/null
 	@rm -f /tmp/technosylva-mapbox.pid /tmp/technosylva-leaflet.pid
 	@echo "stopped"
+
+reload: down up
