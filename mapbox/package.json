@@ -1,0 +1,13 @@
+{
+  "name": "mapbox-canvas-exercise",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static MapLibre GL JS canvas map page (token-free)",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "maplibre-gl": "^4.7.1"
+  }
+}
