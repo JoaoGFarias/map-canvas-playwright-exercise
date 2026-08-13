@@ -1,0 +1,81 @@
+import { expect } from '@playwright/test';
+import { createBdd } from 'playwright-bdd';
+
+const { Given, When, Then } = createBdd();
+
+const FIRE_RISK_ZONE_CENTER: [number, number] = [37.7749, -122.4194];
+const FIXED_ZOOM = 9;
+
+Given('the map page is open', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForFunction(() => Boolean((window as any).map && (window as any).tileLayer));
+});
+
+When('I force the map to center on the fire-risk zone at a fixed zoom', async ({ page }) => {
+  // Leaflet takes [lat, lng]; the sibling Mapbox project takes [lng, lat] for
+  // the same coordinates — mixing the two silently reprojects to the wrong
+  // hemisphere instead of erroring.
+  await page.evaluate(
+    ([center, zoom]) => {
+      (window as any).map.setView(center, zoom, { animate: false });
+    },
+    [FIRE_RISK_ZONE_CENTER, FIXED_ZOOM] as const
+  );
+});
+
+When('I wait for the basemap tiles to finish loading', async ({ page }) => {
+  // once('load', ...) registered after tiles already finished would never
+  // resolve, so the already-loaded case must be checked explicitly first.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const tileLayer = (window as any).tileLayer;
+        if (tileLayer._loading === false) {
+          resolve();
+        } else {
+          tileLayer.once('load', () => resolve());
+        }
+      })
+  );
+});
+
+Then("clicking the canvas at the fire-risk zone's projected pixel coordinate should hit inside the zone", async ({ page }) => {
+  // latLngToContainerPoint is relative to the map pane, but Leaflet's
+  // canvas renderer positions its <canvas> element on a padded, CSS-translated
+  // offset from that pane (it over-renders past the viewport so panning
+  // doesn't need an immediate repaint) — so the container point has to be
+  // re-based onto the canvas element's own bounding box before it's a valid
+  // canvas-local pixel coordinate for click()/getImageData() alike.
+  const point = await page.evaluate((center) => {
+    const p = (window as any).map.latLngToContainerPoint(center);
+    const mapRect = (window as any).map.getContainer().getBoundingClientRect();
+    const canvasEl = document.querySelector('.leaflet-overlay-pane canvas') as HTMLCanvasElement;
+    const canvasRect = canvasEl.getBoundingClientRect();
+    return {
+      x: mapRect.left + p.x - canvasRect.left,
+      y: mapRect.top + p.y - canvasRect.top,
+    };
+  }, FIRE_RISK_ZONE_CENTER);
+
+  const canvas = page.locator('.leaflet-overlay-pane canvas');
+  await canvas.click({ position: point });
+
+  const pixel = await page.evaluate((pt) => {
+    const canvasEl = document.querySelector('.leaflet-overlay-pane canvas') as HTMLCanvasElement;
+    const ctx = canvasEl.getContext('2d')!;
+    const data = ctx.getImageData(pt.x, pt.y, 1, 1).data;
+    return Array.from(data);
+  }, point);
+
+  const [r, g, b] = pixel;
+  // Canvas2D pixel sampling is reliable here because preferCanvas renders
+  // to a real 2D context; the sibling Mapbox project uses WebGL, whose
+  // framebuffer isn't readable this way without extra setup.
+  expect(r).toBeGreaterThan(g);
+  expect(r).toBeGreaterThan(b);
+});
+
+Then('I can click the fire-risk zone marker by its real DOM selector', async ({ page }) => {
+  await page.locator('.leaflet-marker-icon').click();
+  await expect(page.locator('.leaflet-popup-content')).toContainText('Fire risk zone center');
+});

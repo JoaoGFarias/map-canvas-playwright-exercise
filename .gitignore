@@ -1,6 +1,7 @@
 node_modules/
 test-results/
 playwright-report/
+.features-gen/
 .DS_Store
 *.png
 !**/baseline/*.png

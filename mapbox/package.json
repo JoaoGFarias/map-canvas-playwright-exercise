@@ -5,9 +5,14 @@
   "description": "Static MapLibre GL JS canvas map page (token-free)",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "bddgen && playwright test"
   },
   "dependencies": {
     "maplibre-gl": "^4.7.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "playwright-bdd": "^9.2.0"
   }
 }
