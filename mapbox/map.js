@@ -12,7 +12,10 @@ const map = new maplibregl.Map({
 });
 window.map = map;
 
-new maplibregl.Marker({ color: '#d64545' }).setLngLat(center).addTo(map);
+new maplibregl.Marker({ color: '#d64545' })
+  .setLngLat(center)
+  .setPopup(new maplibregl.Popup().setText('Fire risk zone center'))
+  .addTo(map);
 
 const fireRiskZone = {
   type: 'Feature',
